@@ -1,0 +1,54 @@
+
+
+.mac-address-form label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.mac-address-form input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.mac-address-form button[type='submit'] {
+  background-color: #4c5060;
+  color: #fff;
+  padding: 10px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 30px;
+  margin-bottom: 30px;
+}
+
+.input-field {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.mac-address-form button[type='button'] {
+  background-color: #fff;
+  font-size: 1rem;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 30px;
+}
+
+.add-mac-address-button {
+  background-color: #4c5060;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
