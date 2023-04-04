@@ -20,10 +20,10 @@ const client = mqtt.connect(connectUrl, {
   reconnectPeriod: 1000,
 })
 
-var macAddress = ["4C:53:FD:C6:CA:DF","B4:C4:FC:97:5C:5C", "A4:FC:77:43:55:07"];
-var names = ["Ayush Kindle", "Redmi", "Ayush Laptop"];
-var rssi = [null, null, null];
-var datetime = [null, null, null];
+var macAddress = [];
+var names = [];
+var rssi = [];
+var datetime = [];
 
 
 app.use(bodyParser.urlencoded({
