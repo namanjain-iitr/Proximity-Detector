@@ -1,36 +1,31 @@
 import GridList from './gridList.js'
 import MacAddressForm from './macAddressForm.js'
 import './App.css';
-import React, {Component} from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios'
 
-// var macData = [
-//   {
-//     "id" : 1,
-//     "name" : "Ayush",
-//     "macAddress" : "34:124:21:45",
-//     "lastSeen" : "4:00:00",
-//     "rssi" : "-45"
-//   },
-//   {
-//     "id" : 2,
-//     "name" : "Ayush",
-//     "macAddress" : "34:124:21:45",
-//     "lastSeen" : "4:00:00",
-//     "rssi" : "-45"
-//   }
-// ]
+function App() {
+  const [data, setData] = useState(null);
 
-class App extends Component {
+  useEffect(() => {
+    fetchData(); // initial fetch
+    const intervalId = setInterval(fetchData, 10000); // fetch every 5 minutes
+    return () => clearInterval(intervalId); // cleanup
+  }, []);
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      macData : [],
+  const fetchData = async () => {
+    try {
+      const response = await fetch('/fetch-mac-data');
+      const macData = await response.json();
+      console.log(macData);
+      setData(macData);
+    } catch (error) {
+      console.log("error");
+      console.error(error);
     }
-  }
+  };
 
-handleAddMacAddress = (mac, name) => {
+  let handleAddMacAddress = (mac, name) => {
     let payLoad = {
       "macAddress" : mac,
       "name" : name
@@ -38,30 +33,16 @@ handleAddMacAddress = (mac, name) => {
     console.log(payLoad);
     axios.post('/add-macAddress', payLoad)
     .then(res => console.log(res));
-
 }
-async componentDidMount() {
-  axios.get('/fetch-mac-data')
-  .then(res => {
-    console.log(res);
-    this.setState({macData : res.data});
-  })
-  .catch();
-}
-
-  render() {
-    const {macData} = this.state;
-    console.log(macData);
-    return (
-      <div className="App">
+  return (
+    <div className="App">
         <header className="App-header">
         <h1> Proximity Detector </h1>
-          <MacAddressForm onAddMacAddress = {this.handleAddMacAddress}/>
-          <GridList data = {macData}/>
+          <MacAddressForm onAddMacAddress = {handleAddMacAddress}/>
+          <GridList data = {data}/>
         </header>
       </div>
-    );
-  }
+  );
 }
 
 export default App;

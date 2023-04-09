@@ -5,7 +5,7 @@ import './gridList.css'
 const GridList = ({ data }) => {
   return (
     <Grid fluid>
-    {data.map(item => (
+    {data?data.map(item => (
       <div className="grid-item" key={item.id}>
         <div className="row">
           <div className="name">{item.name}</div>
@@ -16,7 +16,7 @@ const GridList = ({ data }) => {
           <div className="rssi">RSSI : {item.rssi} dBm</div>
         </div>
       </div>
-    ))}
+    )):<div/>}
     </Grid>
   );
 };
