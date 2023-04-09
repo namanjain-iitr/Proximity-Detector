@@ -1,0 +1,51 @@
+.grid-item {
+  background-color: #262A56;
+  border: 2px solid #ccc;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  margin: 20px;
+  border-radius: 20px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+}
+
+.name {
+  font-weight: bold;
+  font-size: 2rem;
+  padding-right: 400px;
+  padding-left: 20px;
+}
+
+.mac-address {
+  font-size: 1rem;
+  padding: "20px 20px 20px 20px";
+  padding-left: 20px;
+  padding-bottom: 10px;
+}
+
+.last-seen {
+  font-size: 1rem;
+  padding: 15px;
+}
+
+.time-stamp {
+  font-size: 1rem;
+  color: #52CC7A;
+  font-weight: bold;
+  display: inline;
+}
+
+.rssi {
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding-right: 15px;
+  color: #007bff;
+}
