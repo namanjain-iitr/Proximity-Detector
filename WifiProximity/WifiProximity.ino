@@ -1,29 +1,41 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <Ubidots.h>
 #include "./esppl_functions.h"
 
-const char *mactopic = ""; // MQTT mac-address list retrival topic
-const char *statustopic = ""; // MQTT status update topic
+// Configeration (Enter your own values in these fields)
 
-// WiFi
-const char *ssid = ""; // Enter your WiFi name
-const char *password = "";  // Enter WiFi password
+int ledPin = D5;                                // Pin Number where led bulb is connected
 
-// MQTT Broker
-const char *mqtt_broker = "broker.hivemq.com";
-const int mqtt_port = 1883;
+char ubidotsToken[] = "";
 
+// MQTT Broker Topic
+const char *mactopic = "";          // MQTT topic for subscribing to mac address list
+const char *statustopic = "";    // MQTT topic to publish rssi of nearby devices
+
+// WiFi Details
+const char *ssid = "";                    // Your Wifi Username
+const char *password = "";              // Your Wifi Password
+
+// MQTT Broker Details
+const char *mqtt_broker = "broker.hivemq.com";  // MQTT Broker URL
+const int mqtt_port = 1883;                     // MQTT Port
+
+
+// Global Variables (To be used in program execution)
 int numMacs = 0;
-uint8_t (*mac_address)[6];
+uint8_t (*mac_address)[ESPPL_MAC_LEN];
+char (*mac_string)[20];
 const String client_id = "esp8266-client-"+String(WiFi.macAddress());
 
-WiFiClient espClient;
-PubSubClient client(espClient);
+WiFiClient espClient;                           // Wifi Client
+PubSubClient mqttClient(espClient);             // MQTT Client
+Ubidots ubidotsClient(ubidotsToken, UBI_HTTP);  // Ubidots Client
 
-StaticJsonDocument<400> doc;
-StaticJsonDocument<200> status;
-JsonObject result = status.to<JsonObject>();
+StaticJsonDocument<400> macList;                // Json document to receive mac address list
+StaticJsonDocument<200> deviceRssi;             // Json document to store result data
+JsonObject result = deviceRssi.to<JsonObject>();// Json object to access document
 
 // Utility function to compare two mac address
 bool maccmp(uint8_t *mac1, uint8_t *mac2)
@@ -42,15 +54,15 @@ void cb(esppl_frame_info *info)
         if (maccmp(info->sourceaddr, mac_address[i]) || maccmp(info->receiveraddr, mac_address[i]))
         {
             String idx = String(i);
+            digitalWrite(ledPin, HIGH);
 
-            if(result.containsKey(idx)){
+            if(result.containsKey(idx))
               result[idx] = max((int)result[idx], info->rssi);
-            } else {
+            else
               result[idx] = info->rssi;
-            }
 
             Serial.printf("\n%d is here! :)", i);
-            Serial.printf("\nRSSI : %d", info->rssi);
+            Serial.printf(", RSSI : %d", info->rssi);
             Serial.println();
         }
 
@@ -64,7 +76,7 @@ void StringToMac(const char* str, uint8_t mac[6]){
 
 // callback function called whenever we get a list of mac-address from MQTT
 void callback(char *topic, byte *payload, unsigned int length) {
-  DeserializationError error = deserializeJson(doc, payload);
+  DeserializationError error = deserializeJson(macList, payload);
 
   // Test if parsing succeeds.
   if (error) {
@@ -74,17 +86,20 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
 
   // dynamically allocate size if number of mac-address is changed
-  if(doc.size() != numMacs){
-    numMacs = doc.size();
+  if(macList.size() != numMacs){
+    numMacs = macList.size();
     if(mac_address != nullptr){
       delete[] mac_address;
+      delete[] mac_string;
     }
     mac_address = new uint8_t[numMacs][ESPPL_MAC_LEN];
+    mac_string = new char[numMacs][20];
   }
   
   // Process the list of all mac-address received
   for(int i = 0; i < numMacs; ++i){
-    StringToMac(doc[i], mac_address[i]);
+    strcpy(mac_string[i], macList[i]);
+    StringToMac(macList[i], mac_address[i]);
     for(int j = 0; j < 6; ++j){
       Serial.print(mac_address[i][j], HEX);
       if(j != 5)
@@ -95,11 +110,11 @@ void callback(char *topic, byte *payload, unsigned int length) {
 }
 
 
-// start variables package - Skickar 2018 hardware LED for NodeMCU on mini breadboard //
+// Setup NodeMCU device
 void setup()
 {
     Serial.begin(115200);
-    esppl_init(cb);
+    esppl_init(cb);                        
 
     // connecting to a WiFi network
     WiFi.begin(ssid, password);
@@ -110,21 +125,22 @@ void setup()
     Serial.println("Connected to the WiFi network");
 
     //connecting to a mqtt broker
-    client.setServer(mqtt_broker, mqtt_port);
-    client.setCallback(callback);
+    mqttClient.setServer(mqtt_broker, mqtt_port);
+    mqttClient.setCallback(callback);
 
-    while (!client.connected()) {
+    while (!mqttClient.connected()) {
         Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
         
-        if (client.connect(client_id.c_str())) {
+        if (mqttClient.connect(client_id.c_str())) {
             Serial.println("Public emqx mqtt broker connected");
         } else {
             Serial.print("failed with state ");
-            Serial.println(client.state());
+            Serial.println(mqttClient.state());
             delay(2000);
         }
     }
-    client.subscribe(mactopic);
+    mqttClient.subscribe(mactopic);
+    pinMode(ledPin, OUTPUT);
 }
 
 
@@ -135,7 +151,7 @@ void loop()
     // Wait to get a updated list of mac-address from MQTT broker
     do {
       for(int i = 0; i < 10; ++i){
-        client.loop();
+        mqttClient.loop();
         delay(1000);
       }
     } while(numMacs == 0);
@@ -147,14 +163,11 @@ void loop()
       for (int i = ESPPL_CHANNEL_MIN; i <= ESPPL_CHANNEL_MAX; i++)
       {
           esppl_set_channel(i);
-          while (esppl_process_frames())
-          {
-              //
-          }
+          while (esppl_process_frames());
       }
     }
-    WiFi.disconnect();
     esppl_sniffing_stop();
+    digitalWrite(ledPin, LOW);
 
     // Reconnect to wifi    
     WiFi.begin(ssid, password);
@@ -165,24 +178,33 @@ void loop()
     Serial.println();
 
     // Reconnect to MQTT broker
-    while (!client.connected()) {
+    while (!mqttClient.connected()) {
         
-        if (client.connect(client_id.c_str())) {
-            client.subscribe(mactopic);
+        if (mqttClient.connect(client_id.c_str())) {
+            mqttClient.subscribe(mactopic);
         } else {
             Serial.print("failed with state ");
-            Serial.println(client.state());
+            Serial.println(mqttClient.state());
             delay(2000);
         }
     }
 
+    for(int i = 0; i < numMacs; ++i){
+      String idx = String(i);
+      ubidotsClient.add(mac_string[i], result.containsKey(idx));
+    }
+
+    bool bufferSent = false;
+    bufferSent = ubidotsClient.send();
+
     // Send any result to MQTT broker
     if(result.size() != 0){
       Serial.println("Uploading results!");
+
       String output;
-      serializeJson(status, output);
-      client.publish(statustopic, output.c_str());
-      status.clear();
-      result = status.to<JsonObject>();
+      serializeJson(deviceRssi, output);
+      mqttClient.publish(statustopic, output.c_str());
+      deviceRssi.clear();
+      result = deviceRssi.to<JsonObject>();
     }
 }
