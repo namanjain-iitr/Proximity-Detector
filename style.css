@@ -1,0 +1,166 @@
+/* General styles */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+
+/* Header styles */
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+}
+
+
+/* Main content styles */
+
+main {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+main h2 {
+    font-size: 24px;
+    margin: 20px 0 10px;
+}
+
+main p {
+    font-size: 18px;
+    line-height: 1.5;
+    margin: 0 0 20px;
+}
+
+main ul,
+main ol {
+    font-size: 18px;
+    line-height: 1.5;
+    margin: 0 0 20px;
+    padding-left: 20px;
+}
+
+main code {
+    background-color: #eee;
+    border-radius: 3px;
+    padding: 0 3px;
+}
+
+main pre {
+    background-color: #eee;
+    border-radius: 3px;
+    padding: 10px;
+    overflow-x: auto;
+}
+
+
+/* Code styles */
+
+pre code {
+    display: block;
+    font-size: 16px;
+    line-height: 1.5;
+    padding: 0;
+    margin: 0;
+}
+
+.token {
+    font-weight: bold;
+}
+
+.token.string,
+.token.char,
+.token.number {
+    color: #d73a49;
+}
+
+.token.keyword,
+.token.boolean,
+.token.function,
+.token.variable {
+    color: #0086b3;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+    color: #6a737d;
+}
+
+.token.operator,
+.token.operator-literal {
+    color: #d73a49;
+}
+
+.token.punctuation {
+    color: #999;
+}
+
+
+/* Button styles */
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #0069d9;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0069d9;
+    border-color: #0062cc;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
