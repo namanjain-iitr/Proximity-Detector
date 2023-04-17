@@ -19,6 +19,7 @@ const int mqtt_port = ;                     // MQTT Port
 const char *macTopic = "";          // MQTT topic for subscribing to mac address list
 const char *statusTopic = "";    // MQTT topic to publish rssi of nearby devices
 
+const rssi_threshold = -70;      // Threshold for rssi value
 
 // Configeration of rgb light
 int redPin = D5;
@@ -51,6 +52,7 @@ bool maccmp(uint8_t *mac1, uint8_t *mac2)
 // callback function called whenever we get a new wifi packet in promiscuous mode
 void cb(esppl_frame_info *info)
 {
+  if(info->rssi >= rssi_threshold){
     for (int i = 0; i < numMacs; i++)
     {
         if (maccmp(info->sourceaddr, mac_address[i]) || maccmp(info->receiveraddr, mac_address[i]))
@@ -61,15 +63,16 @@ void cb(esppl_frame_info *info)
 
             if(result.containsKey(idx))
               result[idx] = max((int)result[idx], info->rssi);
-            else
+            else{
               result[idx] = info->rssi;
-
-            Serial.printf("\n%d is here! :)", i);
-            Serial.printf(", RSSI : %d", info->rssi);
-            Serial.println();
+              Serial.printf("\n%d is here! :)", i);
+              Serial.printf(", RSSI : %d", info->rssi);
+              Serial.println();
+            }
         }
 
     }
+  }
 }
 
 // Utility function to convert string representation of mac address to an array
