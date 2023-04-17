@@ -4,24 +4,26 @@
 #include <Ubidots.h>
 #include "./esppl_functions.h"
 
-// Configeration (Enter your own values in these fields)
 
-int ledPin = D5;                                // Pin Number where led bulb is connected
-
-char ubidotsToken[] = "";
-
-// MQTT Broker Topic
-const char *mactopic = "";          // MQTT topic for subscribing to mac address list
-const char *statustopic = "";    // MQTT topic to publish rssi of nearby devices
+char ubidotsToken[] = "";     // Enter Your Ubidots Token String From Ubidots
 
 // WiFi Details
 const char *ssid = "";                    // Your Wifi Username
-const char *password = "";              // Your Wifi Password
+const char *password = "";            // Your Wifi Password
 
 // MQTT Broker Details
-const char *mqtt_broker = "broker.hivemq.com";  // MQTT Broker URL
-const int mqtt_port = 1883;                     // MQTT Port
+const char *mqtt_broker = "";  // MQTT Broker URL
+const int mqtt_port = ;                     // MQTT Port
 
+// MQTT Broker Topic
+const char *macTopic = "";          // MQTT topic for subscribing to mac address list
+const char *statusTopic = "";    // MQTT topic to publish rssi of nearby devices
+
+
+// Configeration of rgb light
+int redPin = D5;
+int bluePin = D6;
+int greenPin = D7;
 
 // Global Variables (To be used in program execution)
 int numMacs = 0;
@@ -54,7 +56,8 @@ void cb(esppl_frame_info *info)
         if (maccmp(info->sourceaddr, mac_address[i]) || maccmp(info->receiveraddr, mac_address[i]))
         {
             String idx = String(i);
-            digitalWrite(ledPin, HIGH);
+            digitalWrite(bluePin, LOW);
+            digitalWrite(greenPin, HIGH);
 
             if(result.containsKey(idx))
               result[idx] = max((int)result[idx], info->rssi);
@@ -114,14 +117,19 @@ void callback(char *topic, byte *payload, unsigned int length) {
 void setup()
 {
     Serial.begin(115200);
-    esppl_init(cb);                        
+    esppl_init(cb);      
+    pinMode(redPin, OUTPUT);
+    pinMode(bluePin, OUTPUT);
+    pinMode(greenPin, OUTPUT);                  
 
+    digitalWrite(redPin, HIGH);
     // connecting to a WiFi network
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
+        delay(1000);
         Serial.print(".");
     }
+    
     Serial.println("Connected to the WiFi network");
 
     //connecting to a mqtt broker
@@ -139,8 +147,8 @@ void setup()
             delay(2000);
         }
     }
-    mqttClient.subscribe(mactopic);
-    pinMode(ledPin, OUTPUT);
+    mqttClient.subscribe(macTopic);
+    
 }
 
 
@@ -156,7 +164,9 @@ void loop()
       }
     } while(numMacs == 0);
 
-
+    digitalWrite(redPin, LOW);
+    digitalWrite(bluePin, HIGH);
+    
     // Repeatedly iterate over all Wifi channel to sniff packets and compare their mac with our list
     esppl_sniffing_start();
     for(int times = 0; times < 100; ++times){
@@ -167,7 +177,9 @@ void loop()
       }
     }
     esppl_sniffing_stop();
-    digitalWrite(ledPin, LOW);
+    digitalWrite(bluePin, LOW);
+    digitalWrite(greenPin, LOW);
+    digitalWrite(redPin, HIGH);
 
     // Reconnect to wifi    
     WiFi.begin(ssid, password);
@@ -181,13 +193,14 @@ void loop()
     while (!mqttClient.connected()) {
         
         if (mqttClient.connect(client_id.c_str())) {
-            mqttClient.subscribe(mactopic);
+            mqttClient.subscribe(macTopic);
         } else {
             Serial.print("failed with state ");
             Serial.println(mqttClient.state());
             delay(2000);
         }
     }
+    
 
     for(int i = 0; i < numMacs; ++i){
       String idx = String(i);
@@ -203,7 +216,7 @@ void loop()
 
       String output;
       serializeJson(deviceRssi, output);
-      mqttClient.publish(statustopic, output.c_str());
+      mqttClient.publish(statusTopic, output.c_str());
       deviceRssi.clear();
       result = deviceRssi.to<JsonObject>();
     }

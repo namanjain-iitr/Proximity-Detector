@@ -9,7 +9,7 @@ function App() {
 
   useEffect(() => {
     fetchData(); // initial fetch
-    const intervalId = setInterval(fetchData, 10000); // fetch every 5 minutes
+    const intervalId = setInterval(fetchData, 60000); // fetch every minute
     return () => clearInterval(intervalId); // cleanup
   }, []);
 
@@ -46,50 +46,3 @@ function App() {
 }
 
 export default App;
-
-// class App extends Component {
-
-//   constructor(props) {
-//     super(props);
-//     this.state = {
-//       macData : [],
-//     }
-//   }
-
-// handleAddMacAddress = (mac, name) => {
-//     let payLoad = {
-//       "macAddress" : mac,
-//       "name" : name
-//     }
-//     console.log(payLoad);
-//     axios.post('/add-macAddress', payLoad)
-//     .then(res => console.log(res));
-
-//     this.render();
-
-// }
-// async componentDidMount() {
-//   axios.get('/fetch-mac-data')
-//   .then(res => {
-//     console.log(res);
-//     this.setState({macData : res.data});
-//   })
-//   .catch();
-// }
-
-//   render() {
-//     const {macData} = this.state;
-//     console.log(macData);
-//     return (
-//       <div className="App">
-//         <header className="App-header">
-//         <h1> Proximity Detector </h1>
-//           <MacAddressForm onAddMacAddress = {this.handleAddMacAddress}/>
-//           <GridList data = {macData}/>
-//         </header>
-//       </div>
-//     );
-//   }
-// }
-
-// export default App;

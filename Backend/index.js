@@ -3,16 +3,22 @@ var express = require('express');
 const bodyParser = require("body-parser");
 const mqtt = require('mqtt');
 var app = express();
-const port1 = 4000;
 
-const topic = '';
+// Fill the following values
+const macTopic = '';            // MQTT topic for subscribing to mac address list
+const statusTopic = '';         // MQTT topic to publish rssi of nearby devices
 
-const host = 'broker.hivemq.com';
-const port = '1883';
+const mqttHost = '';            // MQTT Broker URL
+const mqttPort = '';            // MQTT Port
+
+const serverPort = 4000;        // (Optional) Change the port of Backend Server
+
+
+// Parse the provided values
 const clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
+const connectUrl = `mqtt://${mqttHost}:${mqttPort}`;
 
-const connectUrl = `mqtt://${host}:${port}`;
-
+// connect the mqtt cient to mqtt server
 const client = mqtt.connect(connectUrl, {
   clientId,
   clean: false,
@@ -20,6 +26,7 @@ const client = mqtt.connect(connectUrl, {
   reconnectPeriod: 1000,
 })
 
+// variables to store different values
 var macAddress = [];
 var names = [];
 var rssi = [];
@@ -31,21 +38,24 @@ app.use(bodyParser.urlencoded({
 }));
 
 app.use(bodyParser.json());
+
+// Subsribe to status topic and publish intital list on connection
 client.on('connect', () => {
   console.log('Connected');
-  client.subscribe(topic+"/status", function (err) {
+  client.subscribe(statusTopic, function (err) {
     if (!err) {
-      console.log(`Subscribed to ${topic}/status`);
+      console.log(`Subscribed to ${statusTopic}`);
     }
   });
-  client.publish(topic+"/mac", JSON.stringify(macAddress), { qos: 1, retain: true }, (error) => {
+  client.publish(macTopic, JSON.stringify(macAddress), { qos: 1, retain: true }, (error) => {
     if (error) {
       console.error(error)
     }
   });
 })
 
-client.on('message', function (topic, message) {
+// Update status of devices if we receive a new message on statusTopic
+client.on('message', function (statusTopic, message) {
   // Convert the message buffer to a string
   const jsonObj = JSON.parse(message.toString());
   const now = new Date();
@@ -61,7 +71,7 @@ client.on('message', function (topic, message) {
   }
 });
 
-
+// Endpoint for frontend to fetch latest copy of data
 app.get('/fetch-mac-data',function(req,res) {
   let payLoad = [];
   let length = Math.min(macAddress.length, names.length, rssi.length, datetime.length);
@@ -80,6 +90,7 @@ app.get('/fetch-mac-data',function(req,res) {
 
 })
 
+// endpoint for frontend to post a new mac address
 app.post('/add-macAddress', function(req,res) {
     let mac = req.body.macAddress;
     let userName = req.body.name;
@@ -88,13 +99,14 @@ app.post('/add-macAddress', function(req,res) {
     rssi.push(null);
     datetime.push(null);
 
-    client.publish(topic+"/mac", JSON.stringify(macAddress), { qos: 1, retain: true }, (error) => {
+    client.publish(macTopic, JSON.stringify(macAddress), { qos: 1, retain: true }, (error) => {
       if (error) {
         console.error(error)
       }
     });
 
 });
-var server = app.listen(port1,function(){
-  console.log("Server started at port " + port1);
-})
+// Start the Backend server at specified port number
+var server = app.listen(serverPort,function(){
+  console.log("Server started at Port " + serverPort);
+});
